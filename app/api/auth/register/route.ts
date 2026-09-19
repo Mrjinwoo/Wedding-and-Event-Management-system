@@ -18,32 +18,82 @@ export async function POST(req: NextRequest) {
     const { fullName, email, phone, password } = parsed.data
     const supabase = await createClient()
 
-    const { data, error } = await supabase.auth.signUp({
+    console.log('[register] attempting signup for:', email)
+
+    const { data, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { full_name: fullName, phone: phone ?? '', role: 'user' },
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`,
+        data: {
+          full_name: fullName,
+          phone: phone ?? '',
+          role: 'user',
+        },
       },
     })
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 400 })
+    if (signUpError) {
+      // Log full error details server-side
+      console.error('[register] signUp error:', {
+        message: signUpError.message,
+        status: signUpError.status,
+        name: signUpError.name,
+      })
+
+      // User-friendly messages
+      const msg = signUpError.message.toLowerCase()
+      if (msg.includes('already registered') || msg.includes('already exists')) {
+        return NextResponse.json(
+          { error: 'An account with this email already exists. Try logging in.' },
+          { status: 400 }
+        )
+      }
+      if (msg.includes('password')) {
+        return NextResponse.json(
+          { error: 'Password is too weak. Use at least 6 characters.' },
+          { status: 400 }
+        )
+      }
+      if (msg.includes('database')) {
+        return NextResponse.json(
+          { error: 'Database error — please run the profiles trigger fix in Supabase SQL Editor.' },
+          { status: 400 }
+        )
+      }
+      // Return raw message so you can see exactly what Supabase says
+      return NextResponse.json(
+        { error: signUpError.message },
+        { status: 400 }
+      )
+    }
+
+    console.log('[register] signUp result:', {
+      userId: data.user?.id,
+      email: data.user?.email,
+      confirmed: data.user?.email_confirmed_at,
+    })
+
+    if (!data.user) {
+      return NextResponse.json(
+        { error: 'Could not create account. Please try again.' },
+        { status: 400 }
+      )
     }
 
     await logActivity({
-      userId: data.user?.id ?? null,
+      userId: data.user.id,
       action: 'USER_REGISTERED',
       entity: 'profiles',
-      entityId: data.user?.id,
+      entityId: data.user.id,
       details: { email, fullName },
-    })
+    }).catch(() => null)
 
     return NextResponse.json({
-      message: 'Registration successful. Please check your email to verify your account.',
-      userId: data.user?.id,
+      message: 'Registration successful. A verification code has been sent to your email.',
+      userId: data.user.id,
     })
-  } catch {
+  } catch (err) {
+    console.error('[register] unexpected error:', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

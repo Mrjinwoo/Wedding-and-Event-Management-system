@@ -109,7 +109,7 @@ export default function Navbar() {
         <Link href="/" className="flex items-center gap-3 flex-shrink-0">
           <div className="w-11 h-11 rounded-full overflow-hidden shadow">
             <Image
-              src="/logo.jpg"
+              src="/logo.png"
               alt="Wedding and Event Venue"
               width={44} height={44}
               className="w-full h-full object-cover"

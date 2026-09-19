@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
       .eq('id', data.user.id)
       .single()
 
-    if (!profile?.is_active) {
+    if (profile?.is_active === false) {
       await supabase.auth.signOut()
       return NextResponse.json(
         { error: 'Your account has been deactivated. Contact admin.' },

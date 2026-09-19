@@ -47,9 +47,9 @@ export default function ContactPage() {
             <div className="space-y-4">
               {[
                 { icon: "📍", label: "Address",  value: "123 Event Drive, Cebu City, Cebu 6000" },
-                { icon: "📞", label: "Phone",    value: "+63 917 123 4567" },
+                { icon: "📞", label: "Phone",    value: "+63 975 940 3511" },
                 { icon: "✉",  label: "Email",    value: "hello@weddingeventvenue.ph" },
-                { icon: "🕐", label: "Hours",    value: "Mon – Sat, 9:00 AM – 6:00 PM" },
+                { icon: "🕐", label: "Hours",    value: "Mon – Sat, 9:00 AM – 12:00 PM" },
               ].map((item) => (
                 <div key={item.label} className="flex items-start gap-3">
                   <span className="text-xl flex-shrink-0">{item.icon}</span>

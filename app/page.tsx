@@ -60,15 +60,6 @@ export default function HomePage() {
             corporate events and more.
           </p>
         </div>
-        {/* Dot indicators */}
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-          {[0, 1, 2].map((i) => (
-            <span
-              key={i}
-              className={`block w-2 h-2 rounded-full ${i === 0 ? "bg-white" : "bg-white/40"}`}
-            />
-          ))}
-        </div>
       </section>
 
       {/* ── Venue Cards ── */}

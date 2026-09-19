@@ -37,7 +37,7 @@ export default function ForgotPasswordPage() {
         <div className="w-full max-w-sm">
           <div className="flex flex-col items-center mb-8">
             <div className="w-20 h-20 rounded-full overflow-hidden mb-4 shadow-md">
-              <Image src="/logo.jpg" alt="Logo" width={80} height={80} className="w-full h-full object-cover" />
+              <Image src="/logo.png" alt="Logo" width={80} height={80} className="w-full h-full object-cover" />
             </div>
             <h1 className="font-display text-xl font-bold tracking-widest uppercase text-[#1a1a1a]">Event Venue</h1>
             <p className="font-script text-sm italic text-gray-500 mt-0.5">Make Every Moment Magical</p>

@@ -38,6 +38,15 @@ const VENUES = [
     description:
       "A versatile grand pavilion that transforms beautifully for debuts, birthdays, and corporate celebrations.",
   },
+  {
+    name: "The Grand",
+    location: "Cebu City, Cebu",
+    capacity: "300–500 Guests",
+    price: "₱ 48,000",
+    image: "/wedd.jpg",
+    description:
+      "A versatile grand pavilion that transforms beautifully for debuts, birthdays, and corporate celebrations.",
+  },
 ];
 
 export default function VenuePage() {

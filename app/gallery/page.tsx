@@ -6,7 +6,7 @@ const PHOTOS = [
   { src: "/birth.jpg",         alt: "Birthday celebration",    span: "" },
   { src: "/day.jpg",           alt: "Garden of Love venue",    span: "" },
   { src: "/weeding venue.jpg", alt: "Royal Banquet Hall",      span: "" },
-  { src: "/background.png",    alt: "Floral décor",            span: "col-span-2" },
+  { src: "/wedd.jpg",          alt: "The Grand",               span: "" },
 ];
 
 export default function GalleryPage() {
