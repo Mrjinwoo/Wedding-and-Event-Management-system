@@ -1,8 +1,11 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export default function ContactPage() {
+  const router = useRouter();
+
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -13,6 +16,8 @@ export default function ContactPage() {
     message: "",
   });
   const [submitted, setSubmitted] = useState(false);
+  const [verifying, setVerifying] = useState(false);
+  const [verifyError, setVerifyError] = useState("");
 
   function handleChange(
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -20,10 +25,51 @@ export default function ContactPage() {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  // On submit: check if the client's email is already verified (has a session).
+  // If not, redirect to /book/verify?email=…&next=/contact so they come back
+  // here after verifying. If yes, complete the inquiry.
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    // TODO: wire up form submission (email / API)
-    setSubmitted(true);
+    setVerifyError("");
+    setVerifying(true);
+
+    try {
+      // Ask the server whether this email already has an active session
+      const res = await fetch("/api/auth/send-booking-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: form.email }),
+      });
+      const json = await res.json();
+
+      if (!res.ok) {
+        // Rate-limited or other error — show inline, don't block the UX
+        if (res.status !== 429) {
+          // Non-rate-limit errors: still allow the form through so inquiries
+          // aren't silently dropped. Log and continue.
+          console.warn("[contact] send-booking-otp non-fatal error:", json.error);
+          setSubmitted(true);
+          return;
+        }
+        setVerifyError(json.error ?? "Too many requests. Please wait a moment.");
+        return;
+      }
+
+      if (json.alreadyVerified) {
+        // Already logged in — submit the inquiry directly
+        setSubmitted(true);
+        return;
+      }
+
+      // Not yet verified — redirect to OTP gate, come back to /contact after
+      const params = new URLSearchParams({
+        email: form.email,
+        next: "/contact",
+      });
+      router.push(`/book/verify?${params.toString()}`);
+    } finally {
+      setVerifying(false);
+    }
   }
 
   return (
@@ -105,6 +151,11 @@ export default function ContactPage() {
               <h2 className="font-display text-xl font-semibold text-[#1a1a1a] mb-6">
                 Send an Inquiry
               </h2>
+              {verifyError && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
+                  {verifyError}
+                </div>
+              )}
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
@@ -172,9 +223,10 @@ export default function ContactPage() {
                 </div>
                 <button
                   type="submit"
-                  className="w-full py-3 rounded-lg bg-[#9B2C4A] hover:bg-[#7A1F38] text-white font-semibold transition-colors"
+                  disabled={verifying}
+                  className="w-full py-3 rounded-lg bg-[#9B2C4A] hover:bg-[#7A1F38] text-white font-semibold transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  Send Inquiry
+                  {verifying ? "Verifying email…" : "Send Inquiry"}
                 </button>
               </form>
             </>

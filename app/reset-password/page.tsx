@@ -2,12 +2,21 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { resetPasswordSchema } from "@/lib/validation";
 
 export default function ResetPasswordPage() {
+  return (
+    <Suspense>
+      <ResetPasswordForm />
+    </Suspense>
+  );
+}
+
+function ResetPasswordForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -16,6 +25,8 @@ export default function ResetPasswordPage() {
   const [done, setDone] = useState(false);
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  const urlError = searchParams.get("error");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -38,7 +49,14 @@ export default function ResetPasswordPage() {
         body: JSON.stringify({ password }),
       });
       const json = await res.json();
-      if (!res.ok) { setError(json.error); return; }
+      if (!res.ok) {
+        if (res.status === 401 || json.error?.toLowerCase().includes("unauthorized")) {
+          setError("This reset link has expired. Please request a new one.");
+        } else {
+          setError(json.error);
+        }
+        return;
+      }
       setDone(true);
       setTimeout(() => router.push("/login"), 2500);
     } catch {
@@ -52,6 +70,7 @@ export default function ResetPasswordPage() {
     <div className="min-h-screen flex">
       <div className="flex flex-col justify-center items-center w-full md:w-1/2 px-8 py-12 bg-[#F5E6EA]">
         <div className="w-full max-w-sm">
+
           <div className="flex flex-col items-center mb-8">
             <div className="w-20 h-20 rounded-full overflow-hidden mb-4 shadow-md">
               <Image src="/logo.png" alt="Logo" width={80} height={80} className="w-full h-full object-cover" />
@@ -60,12 +79,27 @@ export default function ResetPasswordPage() {
             <p className="font-script text-sm italic text-gray-500 mt-0.5">Make Every Moment Magical</p>
           </div>
 
-          {done ? (
+          {/* Expired link */}
+          {urlError === "auth_callback_failed" ? (
+            <div className="text-center">
+              <div className="text-5xl mb-4">⚠️</div>
+              <h2 className="font-display text-2xl font-bold text-[#1a1a1a] mb-2">Link Expired</h2>
+              <p className="text-sm text-gray-500 mb-6">
+                This password reset link is invalid or has expired.<br />Please request a new one.
+              </p>
+              <Link href="/forgot-password"
+                className="block w-full py-3 rounded-lg bg-[#9B2C4A] hover:bg-[#7A1F38] text-white font-semibold text-center transition-colors">
+                Request New Link
+              </Link>
+            </div>
+
+          ) : done ? (
             <div className="text-center">
               <div className="text-5xl mb-4">✅</div>
               <h2 className="font-display text-2xl font-bold text-[#1a1a1a] mb-2">Password Updated!</h2>
               <p className="text-sm text-gray-500">Redirecting you to login…</p>
             </div>
+
           ) : (
             <>
               <div className="mb-6">
@@ -73,16 +107,24 @@ export default function ResetPasswordPage() {
                 <p className="text-xs text-gray-500 mt-1">Choose a strong new password for your account.</p>
               </div>
 
-              {error && <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">{error}</div>}
+              {error && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">{error}</div>
+              )}
 
               <form onSubmit={handleSubmit} className="space-y-4">
+                {/* New password */}
                 <div>
                   <label className="block text-sm font-medium text-[#1a1a1a] mb-1">New Password</label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔒</span>
-                    <input type={showPassword ? "text" : "password"} placeholder="New password" value={password}
-                      onChange={e => { setPassword(e.target.value); setFieldErrors(p => ({...p, password: ""})); }} required
-                      className={`w-full pl-9 pr-10 py-2.5 rounded-lg border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#9B2C4A] placeholder-gray-400 ${fieldErrors.password ? "border-red-400" : "border-gray-300"}`} />
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      placeholder="New password"
+                      value={password}
+                      onChange={e => { setPassword(e.target.value); setFieldErrors(p => ({...p, password: ""})); }}
+                      required
+                      className={`w-full pl-9 pr-10 py-2.5 rounded-lg border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#9B2C4A] placeholder-gray-400 ${fieldErrors.password ? "border-red-400" : "border-gray-300"}`}
+                    />
                     <button type="button" onClick={() => setShowPassword(p => !p)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                       aria-label={showPassword ? "Hide password" : "Show password"}>
@@ -98,17 +140,25 @@ export default function ResetPasswordPage() {
                       )}
                     </button>
                   </div>
-                  {fieldErrors.password && <p className="text-xs text-red-500 mt-1">{fieldErrors.password}</p>}
-                  <p className="text-[11px] text-gray-400 mt-1">Min 8 chars, 1 uppercase, 1 number, 1 special character</p>
+                  {fieldErrors.password
+                    ? <p className="text-xs text-red-500 mt-1">{fieldErrors.password}</p>
+                    : <p className="text-[11px] text-gray-400 mt-1">Min 8 chars, 1 uppercase, 1 number, 1 special character</p>
+                  }
                 </div>
 
+                {/* Confirm password */}
                 <div>
                   <label className="block text-sm font-medium text-[#1a1a1a] mb-1">Confirm Password</label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔒</span>
-                    <input type={showConfirm ? "text" : "password"} placeholder="Confirm password" value={confirmPassword}
-                      onChange={e => { setConfirmPassword(e.target.value); setFieldErrors(p => ({...p, confirmPassword: ""})); }} required
-                      className={`w-full pl-9 pr-10 py-2.5 rounded-lg border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#9B2C4A] placeholder-gray-400 ${fieldErrors.confirmPassword ? "border-red-400" : "border-gray-300"}`} />
+                    <input
+                      type={showConfirm ? "text" : "password"}
+                      placeholder="Confirm password"
+                      value={confirmPassword}
+                      onChange={e => { setConfirmPassword(e.target.value); setFieldErrors(p => ({...p, confirmPassword: ""})); }}
+                      required
+                      className={`w-full pl-9 pr-10 py-2.5 rounded-lg border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#9B2C4A] placeholder-gray-400 ${fieldErrors.confirmPassword ? "border-red-400" : "border-gray-300"}`}
+                    />
                     <button type="button" onClick={() => setShowConfirm(p => !p)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                       aria-label={showConfirm ? "Hide password" : "Show password"}>
@@ -124,7 +174,9 @@ export default function ResetPasswordPage() {
                       )}
                     </button>
                   </div>
-                  {fieldErrors.confirmPassword && <p className="text-xs text-red-500 mt-1">{fieldErrors.confirmPassword}</p>}
+                  {fieldErrors.confirmPassword && (
+                    <p className="text-xs text-red-500 mt-1">{fieldErrors.confirmPassword}</p>
+                  )}
                 </div>
 
                 <button type="submit" disabled={loading}

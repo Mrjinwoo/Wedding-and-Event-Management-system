@@ -63,8 +63,64 @@ export const venueSchema = z.object({
   isActive: z.boolean().default(true),
 })
 
+// ── Client email OTP (passwordless / booking gate) ───────────────────────────
+export const sendOtpSchema = z.object({
+  email: z.string().email('Invalid email address'),
+})
+
+export const verifyOtpSchema = z.object({
+  email: z.string().email('Invalid email address'),
+  token: z
+    .string()
+    .length(6, 'Code must be exactly 6 digits')
+    .regex(/^\d{6}$/, 'Code must be 6 digits'),
+  /** 'signup' = post-registration confirm  |  'email' = passwordless login  |  'email_change' | 'magiclink' */
+  type: z.enum(['signup', 'email', 'magiclink', 'email_change']).default('email'),
+})
+
+export const resendOtpSchema = z.object({
+  email: z.string().email('Invalid email address'),
+  /** Which Supabase OTP type to resend */
+  type: z.enum(['signup', 'magiclink']).default('signup'),
+})
+
+// ── Staff TOTP MFA ────────────────────────────────────────────────────────────
+export const mfaEnrollConfirmSchema = z.object({
+  factorId: z.string().min(1, 'Factor ID is required'),
+  code: z
+    .string()
+    .length(6, 'TOTP code must be exactly 6 digits')
+    .regex(/^\d{6}$/, 'TOTP code must be 6 digits'),
+})
+
+export const mfaVerifySchema = z.object({
+  factorId: z.string().min(1, 'Factor ID is required'),
+  challengeId: z.string().min(1, 'Challenge ID is required'),
+  code: z
+    .string()
+    .length(6, 'TOTP code must be exactly 6 digits')
+    .regex(/^\d{6}$/, 'TOTP code must be 6 digits'),
+})
+
+export const mfaRecoverySchema = z.object({
+  code: z
+    .string()
+    .min(1, 'Recovery code is required')
+    .max(64, 'Invalid recovery code'),
+})
+
+export const mfaUnenrollSchema = z.object({
+  factorId: z.string().min(1, 'Factor ID is required'),
+})
+
 export type RegisterInput = z.infer<typeof registerSchema>
 export type LoginInput = z.infer<typeof loginSchema>
 export type BookingInput = z.infer<typeof bookingSchema>
 export type MessageInput = z.infer<typeof messageSchema>
 export type VenueInput = z.infer<typeof venueSchema>
+export type SendOtpInput = z.infer<typeof sendOtpSchema>
+export type VerifyOtpInput = z.infer<typeof verifyOtpSchema>
+export type ResendOtpInput = z.infer<typeof resendOtpSchema>
+export type MfaEnrollConfirmInput = z.infer<typeof mfaEnrollConfirmSchema>
+export type MfaVerifyInput = z.infer<typeof mfaVerifySchema>
+export type MfaRecoveryInput = z.infer<typeof mfaRecoverySchema>

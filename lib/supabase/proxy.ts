@@ -48,7 +48,7 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // Admin-only routes — check role
+  // Admin-only routes — check role AND aal2
   if (user && adminRoutes.some(r => path.startsWith(r))) {
     const { data: profile } = await supabase
       .from('profiles')
@@ -60,6 +60,29 @@ export async function updateSession(request: NextRequest) {
       const url = request.nextUrl.clone()
       url.pathname = '/dashboard'
       return NextResponse.redirect(url)
+    }
+
+    // MFA enrollment and challenge pages are exempt — staff must reach them
+    // at aal1 to complete the step-up. All other /admin/* pages require aal2.
+    const mfaExempt =
+      path.startsWith('/admin/mfa/enroll') ||
+      path.startsWith('/admin/mfa/challenge')
+
+    if (!mfaExempt) {
+      const { data: aalData } =
+        await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+
+      const currentLevel = aalData?.currentLevel ?? 'aal1'
+      const nextLevel    = aalData?.nextLevel    ?? 'aal1'
+
+      // nextLevel === 'aal2' means the user HAS an enrolled factor but
+      // hasn't completed the challenge yet in this session.
+      if (nextLevel === 'aal2' && currentLevel !== 'aal2') {
+        const url = request.nextUrl.clone()
+        url.pathname = '/admin/mfa/challenge'
+        url.searchParams.set('next', path)
+        return NextResponse.redirect(url)
+      }
     }
   }
 

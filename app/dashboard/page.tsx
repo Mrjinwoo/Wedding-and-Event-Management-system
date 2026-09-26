@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
+import LogoutButton from '@/components/LogoutButton'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -53,11 +54,14 @@ export default async function DashboardPage() {
     <main className="min-h-screen bg-[#FAF7F5]">
       {/* Header */}
       <div className="bg-[#9B2C4A] py-8 px-6">
-        <div className="max-w-6xl mx-auto">
-          <h1 className="text-white font-display text-2xl font-bold">
-            Welcome back, {profile?.full_name?.split(' ')[0]} 👋
-          </h1>
-          <p className="text-white/70 text-sm mt-1">{user.email}</p>
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
+          <div>
+            <h1 className="text-white font-display text-2xl font-bold">
+              Welcome back, {profile?.full_name?.split(' ')[0]} 👋
+            </h1>
+            <p className="text-white/70 text-sm mt-1">{user.email}</p>
+          </div>
+          <LogoutButton className="text-sm font-semibold px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors disabled:opacity-50" />
         </div>
       </div>
 

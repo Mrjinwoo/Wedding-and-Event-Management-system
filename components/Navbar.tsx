@@ -16,7 +16,7 @@ const NAV_LINKS = [
   { label: "Contact",  href: "/contact" },
 ];
 
-const AUTH_PAGES = ["/login", "/signup", "/forgot-password", "/reset-password"];
+const AUTH_PAGES = ["/login", "/signup", "/forgot-password", "/reset-password", "/verify-email", "/book/verify"];
 
 type Profile = { full_name: string; role: string } | null;
 type Notification = { id: string; title: string; body: string; is_read: boolean };
@@ -25,14 +25,22 @@ export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
 
-  const [menuOpen, setMenuOpen]         = useState(false);
-  const [profile, setProfile]           = useState<Profile>(null);
-  const [unread, setUnread]             = useState(0);
-  const [notifOpen, setNotifOpen]       = useState(false);
+  const [menuOpen, setMenuOpen]           = useState(false);
+  const [profile, setProfile]             = useState<Profile>(null);
+  const [unread, setUnread]               = useState(0);
+  const [notifOpen, setNotifOpen]         = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [loggingOut, setLoggingOut]     = useState(false);
+  const [loggingOut, setLoggingOut]       = useState(false);
+  const [scrolled, setScrolled]           = useState(false);
 
   const notifRef = useRef<HTMLDivElement>(null);
+
+  // ── Scroll detection (transparent → solid + shrink) ─────────────────────
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 40);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   // ── Load logged-in user ──────────────────────────────────────────────────
   const loadUser = useCallback(async () => {
@@ -101,13 +109,24 @@ export default function Navbar() {
 
   const dashboardHref = profile?.role === "admin" ? "/admin" : "/dashboard";
 
+  // Transparent only on the homepage hero; solid everywhere else
+  const isHome      = pathname === "/";
+  const transparent = isHome && !scrolled;
+
   return (
-    <header className="sticky top-0 z-50 bg-white shadow-sm">
-      <nav className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between gap-4">
+    <header className={`sticky top-0 z-50 transition-all duration-500
+      ${transparent
+        ? "bg-transparent shadow-none"
+        : scrolled
+          ? "bg-[#FDF8F5]/95 backdrop-blur-md shadow-md"
+          : "bg-[#FDF8F5] shadow-sm"
+      }`}
+    >
+      <nav className={`max-w-7xl mx-auto px-6 flex items-center justify-between gap-4 transition-all duration-500 ${scrolled ? "h-14" : "h-16"}`}>
 
         {/* ── Logo ── */}
         <Link href="/" className="flex items-center gap-3 flex-shrink-0">
-          <div className="w-11 h-11 rounded-full overflow-hidden shadow">
+          <div className={`w-11 h-11 rounded-full overflow-hidden shadow transition-all duration-500 ${scrolled ? "w-9 h-9" : "w-11 h-11"}`}>
             <Image
               src="/logo.png"
               alt="Wedding and Event Venue"
@@ -116,10 +135,10 @@ export default function Navbar() {
             />
           </div>
           <div className="leading-tight hidden sm:block">
-            <p className="font-display text-sm font-bold tracking-wider uppercase text-[#1a1a1a]">
+            <p className={`font-display text-sm font-bold tracking-wider uppercase transition-colors duration-500 ${transparent ? "text-white" : "text-[#1a1a1a]"}`}>
               Wedding and Event Venue
             </p>
-            <p className="font-script text-xs italic text-gray-500">
+            <p className={`font-script text-xs italic transition-colors duration-500 ${transparent ? "text-white/70" : "text-[#9B2C4A]"}`}>
               Make Every Moment Magical
             </p>
           </div>
@@ -133,8 +152,10 @@ export default function Navbar() {
                 href={href}
                 className={`text-sm font-medium transition-colors relative pb-0.5
                   ${isActive(href)
-                    ? "text-[#9B2C4A] after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-[#9B2C4A] after:rounded"
-                    : "text-[#1a1a1a] hover:text-[#9B2C4A]"
+                    ? `${transparent ? "text-white" : "text-[#9B2C4A]"} after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-current after:rounded`
+                    : transparent
+                      ? "text-white/90 hover:text-white"
+                      : "text-[#3a3a3a] hover:text-[#9B2C4A]"
                   }`}
               >
                 {label}
@@ -152,9 +173,9 @@ export default function Navbar() {
                 <button
                   onClick={loadNotifications}
                   aria-label="Notifications"
-                  className="relative w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+                  className={`relative w-9 h-9 flex items-center justify-center rounded-full transition-colors ${transparent ? "hover:bg-white/20" : "hover:bg-gray-100"}`}
                 >
-                  <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className={`w-5 h-5 transition-colors duration-500 ${transparent ? "text-white" : "text-gray-600"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                       d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                   </svg>
@@ -197,10 +218,10 @@ export default function Navbar() {
               {/* User name + role badge → dashboard */}
               <Link
                 href={dashboardHref}
-                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+                className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-colors ${transparent ? "hover:bg-white/20" : "hover:bg-gray-100"}`}
               >
                 <span className="text-base">👤</span>
-                <span className="text-sm font-medium text-[#1a1a1a] max-w-24 truncate">
+                <span className={`text-sm font-medium max-w-24 truncate transition-colors duration-500 ${transparent ? "text-white" : "text-[#1a1a1a]"}`}>
                   {profile.full_name.split(" ")[0]}
                 </span>
                 {profile.role === "admin" && (
@@ -214,7 +235,11 @@ export default function Navbar() {
               <button
                 onClick={handleLogout}
                 disabled={loggingOut}
-                className="text-sm font-semibold px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors disabled:opacity-50 whitespace-nowrap"
+                className={`text-sm font-semibold px-4 py-2 rounded-lg transition-colors disabled:opacity-50 whitespace-nowrap
+                  ${transparent
+                    ? "bg-white/20 hover:bg-white/30 text-white"
+                    : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                  }`}
               >
                 {loggingOut ? "…" : "Logout"}
               </button>
@@ -222,7 +247,11 @@ export default function Navbar() {
           ) : (
             <Link
               href="/login"
-              className="bg-[#9B2C4A] hover:bg-[#7A1F38] text-white text-sm font-semibold px-5 py-2 rounded-lg transition-colors shadow-sm whitespace-nowrap"
+              className={`text-sm font-semibold px-5 py-2 rounded-lg transition-colors shadow-sm whitespace-nowrap
+                ${transparent
+                  ? "bg-white/20 hover:bg-white/30 text-white border border-white/40 backdrop-blur-sm"
+                  : "bg-[#9B2C4A] hover:bg-[#7A1F38] text-white"
+                }`}
             >
               Login/Register
             </Link>
@@ -233,18 +262,18 @@ export default function Navbar() {
             onClick={() => setMenuOpen(o => !o)}
             aria-label="Toggle menu"
             aria-expanded={menuOpen}
-            className="lg:hidden flex flex-col justify-center items-center w-9 h-9 gap-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+            className={`lg:hidden flex flex-col justify-center items-center w-9 h-9 gap-1.5 rounded-lg transition-colors ${transparent ? "hover:bg-white/20" : "hover:bg-gray-100"}`}
           >
-            <span className={`block h-0.5 w-5 bg-[#1a1a1a] rounded transition-all duration-200 origin-center ${menuOpen ? "rotate-45 translate-y-[7px]" : ""}`} />
-            <span className={`block h-0.5 w-5 bg-[#1a1a1a] rounded transition-all duration-200 ${menuOpen ? "opacity-0 scale-x-0" : ""}`} />
-            <span className={`block h-0.5 w-5 bg-[#1a1a1a] rounded transition-all duration-200 origin-center ${menuOpen ? "-rotate-45 -translate-y-[7px]" : ""}`} />
+            <span className={`block h-0.5 w-5 rounded transition-all duration-200 origin-center ${transparent ? "bg-white" : "bg-[#1a1a1a]"} ${menuOpen ? "rotate-45 translate-y-[7px]" : ""}`} />
+            <span className={`block h-0.5 w-5 rounded transition-all duration-200 ${transparent ? "bg-white" : "bg-[#1a1a1a]"} ${menuOpen ? "opacity-0 scale-x-0" : ""}`} />
+            <span className={`block h-0.5 w-5 rounded transition-all duration-200 origin-center ${transparent ? "bg-white" : "bg-[#1a1a1a]"} ${menuOpen ? "-rotate-45 -translate-y-[7px]" : ""}`} />
           </button>
         </div>
       </nav>
 
       {/* ── Mobile dropdown ── */}
       <div className={`lg:hidden overflow-hidden transition-all duration-300 ${menuOpen ? "max-h-screen" : "max-h-0"}`}>
-        <div className="bg-white border-t border-gray-100 shadow-md">
+        <div className="bg-[#FDF8F5] border-t border-[#e8d5d5] shadow-md">
           <ul className="flex flex-col py-2">
             {NAV_LINKS.map(({ label, href }) => (
               <li key={href}>

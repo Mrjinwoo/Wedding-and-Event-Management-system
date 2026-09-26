@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
+import LogoutButton from '@/components/LogoutButton'
 
 export default async function AdminPage() {
   const supabase = await createClient()
@@ -58,6 +59,7 @@ export default async function AdminPage() {
             <Link href="/admin/bookings" className="text-white/70 hover:text-white text-sm transition-colors">Bookings</Link>
             <Link href="/admin/venues" className="text-white/70 hover:text-white text-sm transition-colors">Venues</Link>
             <Link href="/admin/messages" className="text-white/70 hover:text-white text-sm transition-colors">Messages</Link>
+            <LogoutButton className="text-sm font-semibold px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors disabled:opacity-50" />
           </div>
         </div>
       </div>

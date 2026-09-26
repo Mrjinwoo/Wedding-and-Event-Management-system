@@ -37,7 +37,7 @@ export default function HomePage() {
     <div className="flex flex-col bg-white">
 
       {/* ── Hero ── */}
-      <section className="relative w-full h-[420px] overflow-hidden">
+      <section className="relative w-full h-[420px] -mt-16 overflow-hidden">
         <Image
           src="/background.png"
           alt="Celebrate life's special moments"

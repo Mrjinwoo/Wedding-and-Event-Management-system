@@ -92,8 +92,17 @@ export default function VenuePage() {
                 <p className="text-xs text-gray-500 leading-relaxed mb-4">
                   {venue.description}
                 </p>
+                {/*
+                  "Book Now" routes through the OTP gate.
+                  /book/verify will:
+                    1. Ask for the client's email (or use their existing session)
+                    2. Send a 6-digit code
+                    3. Verify it, then redirect to /contact?next=/contact
+                  The contact/inquiry form is the booking entry point for
+                  the venue's static listing pages.
+                */}
                 <Link
-                  href="/contact"
+                  href={`/book/verify?next=/contact`}
                   className="block text-center w-full py-2 rounded-lg bg-[#9B2C4A] hover:bg-[#7A1F38] text-white text-xs font-semibold transition-colors"
                 >
                   Book Now

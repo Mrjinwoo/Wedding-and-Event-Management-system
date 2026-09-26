@@ -29,6 +29,7 @@ export async function POST(req: NextRequest) {
           phone: phone ?? '',
           role: 'user',
         },
+        // emailRedirectTo is omitted — confirmation email disabled in Supabase dashboard
       },
     })
 
