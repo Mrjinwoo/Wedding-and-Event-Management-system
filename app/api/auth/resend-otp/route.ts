@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
     const supabase = await createClient()
 
     const { error } = await supabase.auth.resend({
-      type,          // 'signup' for email OTP; 'magiclink' for passwordless
+      type,          // 'signup' for email OTP; 'email_change' for email update confirmation
       email,
       options: {
         // No emailRedirectTo — we want {{ .Token }} code, not a link.

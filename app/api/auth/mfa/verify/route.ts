@@ -66,12 +66,12 @@ export async function POST(req: NextRequest) {
       action: 'MFA_VERIFIED',
       entity: 'profiles',
       entityId: user.id,
-      details: { factorId, aal: data.current_level },
+      details: { factorId, aal: data.currentLevel },
     }).catch(() => null)
 
     return NextResponse.json({
       message: 'MFA verified. You now have full admin access.',
-      aal: data.current_level, // should be 'aal2'
+      aal: data.currentLevel, // should be 'aal2'
     })
   } catch {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

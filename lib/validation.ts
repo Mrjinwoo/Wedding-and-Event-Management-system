@@ -81,7 +81,7 @@ export const verifyOtpSchema = z.object({
 export const resendOtpSchema = z.object({
   email: z.string().email('Invalid email address'),
   /** Which Supabase OTP type to resend */
-  type: z.enum(['signup', 'magiclink']).default('signup'),
+  type: z.enum(['signup', 'email_change']).default('signup'),
 })
 
 // ── Staff TOTP MFA ────────────────────────────────────────────────────────────

@@ -43,11 +43,9 @@ export async function DELETE(req: NextRequest) {
     }
 
     // Require aal2 to unenroll (can't remove MFA without having passed MFA)
-    const {
-      data: { currentLevel },
-    } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+    const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
 
-    if (currentLevel !== 'aal2') {
+    if (aalData?.currentLevel !== 'aal2') {
       return NextResponse.json(
         {
           error:
