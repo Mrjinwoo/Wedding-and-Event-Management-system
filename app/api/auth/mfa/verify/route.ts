@@ -61,17 +61,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
 
+    const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+    const currentLevel = aalData?.currentLevel ?? null
+
     await logActivity({
       userId: user.id,
       action: 'MFA_VERIFIED',
       entity: 'profiles',
       entityId: user.id,
-      details: { factorId, aal: data.currentLevel },
+      details: { factorId, aal: currentLevel },
     }).catch(() => null)
 
     return NextResponse.json({
       message: 'MFA verified. You now have full admin access.',
-      aal: data.currentLevel, // should be 'aal2'
+      aal: currentLevel,
     })
   } catch {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
